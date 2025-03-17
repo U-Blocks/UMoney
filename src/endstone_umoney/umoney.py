@@ -407,7 +407,7 @@ class umoney(Plugin):
 
     @event_handler
     def on_player_join(self, event: PlayerJoinEvent):
-        if not self.money_data.get(event.player.name):
+        if self.money_data.get(event.player.name) is None:
             self.money_data[event.player.name] = self.config_data['default_money']
             self.save_money_data()
         event.player.send_message(f'{ColorFormat.YELLOW}余额： '
@@ -416,10 +416,7 @@ class umoney(Plugin):
     # API
     # 获取所有玩家经济
     def api_get_money_data(self):
-        with open(money_data_file_path, 'r', encoding='utf-8') as f:
-            money_data = json.loads(f.read())
-        return money_data
-
+        return self.money_data
     # 获取指定玩家经济
     def api_get_player_money(self, player_name: str):
         player_money = self.money_data[player_name]
