@@ -89,6 +89,7 @@ class umoney(Plugin):
         if len(online_player_name_list) == 0:
             player.send_message(f'{ColorFormat.RED}转账失败： {ColorFormat.WHITE}当前没有可转账的玩家在线...')
             return
+        online_player_name_list.sort(key=lambda x:x[0].lower(), reverse=False)
         player_money = self.money_data[player.name]
         dropdown = Dropdown(
             label=f'{ColorFormat.GREEN}选择玩家...',
@@ -143,6 +144,7 @@ class umoney(Plugin):
         if len(offline_player_name_list) == 0:
             player.send_message(f'{ColorFormat.RED}转账失败： {ColorFormat.WHITE}当前所有玩家都在线...')
             return
+        offline_player_name_list.sort(key=lambda x:x[0].lower(), reverse=False)
         player_money = self.money_data[player.name]
         dropdown = Dropdown(
             label=f'{ColorFormat.GREEN}选择玩家...',
@@ -213,138 +215,110 @@ class umoney(Plugin):
 
     # 管理玩家经济
     def money_admin(self, player: Player):
-        money_admin_form = ActionForm(
+        player_name_list = [player_name for player_name in self.money_data.keys()]
+        player_name_list.sort(key=lambda x:x[0].lower(), reverse=False)
+        dropdown = Dropdown(
+            label=f'{ColorFormat.GREEN}选择玩家...',
+            options=player_name_list
+        )
+        money_admin_form = ModalForm(
             title=f'{ColorFormat.BOLD}{ColorFormat.LIGHT_PURPLE}经济管理',
-            content=f'{ColorFormat.GREEN}请选择操作...',
-            on_close=self.back_to_money_main_form
-        )
-        money_admin_form.add_button(f'{ColorFormat.YELLOW}查询玩家经济', icon='textures/ui/magnifyingGlass', on_click=self.search_player_money)
-        money_admin_form.add_button(f'{ColorFormat.YELLOW}重置玩家经济', icon='textures/ui/hammer_l', on_click=self.set_player_money)
-        money_admin_form.add_button(f'{ColorFormat.YELLOW}变动玩家经济', icon='textures/ui/hammer_l', on_click=self.change_player_money)
-        money_admin_form.add_button(f'{ColorFormat.YELLOW}重载玩家经济', icon='textures/ui/icon_setting', on_click=self.reload_money_data)
-        money_admin_form.add_button(f'{ColorFormat.YELLOW}返回', icon='textures/ui/refresh_light', on_click=self.back_to_money_main_form)
-        player.send_form(money_admin_form)
-
-    # 查询玩家经济
-    def search_player_money(self, player: Player):
-        textinput = TextInput(
-            label=f'{ColorFormat.GREEN}输入玩家名...',
-            placeholder='请输入服务器中存在过的玩家名'
-        )
-        search_player_money_form = ModalForm(
-            title=f'{ColorFormat.BOLD}{ColorFormat.LIGHT_PURPLE}查询玩家经济',
-            controls=[textinput],
+            controls=[dropdown],
             submit_button=f'{ColorFormat.YELLOW}查询',
             on_close=self.back_to_money_main_form
         )
-        def on_submit(player: Player, json_str):
+        def on_submit(player: Player, json_str: str):
             data = json.loads(json_str)
-            if len(data[0]) == 0:
-                player.send_message(f'{ColorFormat.RED}表单解析错误, 请按提示正确填写...')
-                return
-            target_player_name = data[0]
-            player_name_list = [key for key in self.money_data.keys()]
-            if target_player_name not in player_name_list:
-                player.send_message(f'{ColorFormat.RED}查询失败： {ColorFormat.WHITE}查无此人...')
-                return
+            target_player_name = player_name_list[data[0]]
             target_player_money = self.money_data[target_player_name]
-            search_player_money_result_form = ActionForm(
-                title=f'{ColorFormat.BOLD}{ColorFormat.LIGHT_PURPLE}查询结果： {target_player_name}',
-                content=f'{ColorFormat.GREEN}余额： {ColorFormat.WHITE}{target_player_money}',
-                on_close=self.back_to_money_main_form
+            money_query_result_form = ActionForm(
+                title=f'{ColorFormat.BOLD}{ColorFormat.LIGHT_PURPLE}{target_player_name}的经济',
+                content=f'{ColorFormat.GREEN}余额： {ColorFormat.RESET}{target_player_money}\n\n'
+                        f'{ColorFormat.GREEN}请选择操作...',
+                on_close=self.money_admin
             )
-            search_player_money_result_form.add_button(f'{ColorFormat.YELLOW}重置玩家经济', icon='textures/ui/hammer_l', on_click=self.set_player_money)
-            search_player_money_result_form.add_button(f'{ColorFormat.YELLOW}变动玩家经济', icon='textures/ui/hammer_l', on_click=self.set_player_money)
-            search_player_money_result_form.add_button(f'{ColorFormat.YELLOW}返回', icon='textures/ui/refresh_light', on_click=self.back_to_money_main_form)
-            player.send_form(search_player_money_result_form)
-        search_player_money_form.on_submit = on_submit
-        player.send_form(search_player_money_form)
+            money_query_result_form.add_button(f'{ColorFormat.YELLOW}重置玩家经济', icon='textures/ui/hammer_l',
+                                               on_click=self.set_player_money(target_player_name, target_player_money))
+            money_query_result_form.add_button(f'{ColorFormat.YELLOW}变动玩家经济', icon='textures/ui/hammer_l',
+                                               on_click=self.change_player_money(target_player_name, target_player_money))
+            money_query_result_form.add_button(f'{ColorFormat.YELLOW}返回', icon='textures/ui/refresh_light', on_click=self.money_admin)
+            player.send_form(money_query_result_form)
+        money_admin_form.on_submit = on_submit
+        player.send_form(money_admin_form)
 
     # 重置玩家经济
-    def set_player_money(self, player: Player):
-        player_name_list = [key for key in self.money_data.keys()]
-        dropdown = Dropdown(
-            label=f'{ColorFormat.GREEN}选择玩家...',
-            options=player_name_list
-        )
-        textinput1 = TextInput(
-            label=f'{ColorFormat.GREEN}输入重置金额...',
-            placeholder='请输入任意整数，例如：20或0或-20'
-        )
-        money_set_form = ModalForm(
-            title=f'{ColorFormat.BOLD}{ColorFormat.LIGHT_PURPLE}经济重置',
-            controls=[dropdown, textinput1],
-            submit_button=f'{ColorFormat.YELLOW}重置',
-            on_close=self.back_to_money_main_form
-        )
-        def on_submit(player: Player, json_str):
-            data = json.loads(json_str)
-            # 获取目标设置的玩家名
-            target_player_name = player_name_list[data[0]]
-            # 判断目标设置的金额是否为正确的数字类型
-            try:
-                money_to_set = int(data[1])
-            except:
-                player.send_message(f'{ColorFormat.RED}重置失败： {ColorFormat.WHITE}表单数据解析错误，请按提示正确填写...')
-                return
-            self.money_data[target_player_name] = money_to_set
-            self.save_money_data()
-            player.send_message(f'{ColorFormat.YELLOW}重置成功...')
-            if self.server.get_player(target_player_name) is not None:
-                target_player = self.server.get_player(target_player_name)
-                target_player.send_message(f'{ColorFormat.YELLOW}经济重置： '
-                                           f'余额： {ColorFormat.WHITE}{self.money_data[target_player_name]}')
-        money_set_form.on_submit = on_submit
-        player.send_form(money_set_form)
+    def set_player_money(self, target_player_name: str, target_player_money: int):
+        def on_click(player: Player):
+            textinput = TextInput(
+                label=f'{ColorFormat.GREEN}{target_player_name}的余额： '
+                      f'{ColorFormat.RESET}{target_player_money}\n\n'
+                      f'{ColorFormat.GREEN}输入重置金额...',
+                placeholder='请输入任意整数，例如：20或0或-20'
+            )
+            money_set_form = ModalForm(
+                title=f'{ColorFormat.BOLD}{ColorFormat.LIGHT_PURPLE}经济重置',
+                controls=[textinput],
+                submit_button=f'{ColorFormat.YELLOW}重置',
+                on_close=self.money_admin
+            )
+            def on_submit(player: Player, json_str):
+                data = json.loads(json_str)
+                # 判断目标设置的金额是否为正确的数字类型
+                try:
+                    money_to_set = int(data[0])
+                except:
+                    player.send_message(f'{ColorFormat.RED}重置失败： {ColorFormat.WHITE}表单数据解析错误，请按提示正确填写...')
+                    return
+                self.money_data[target_player_name] = money_to_set
+                self.save_money_data()
+                player.send_message(f'{ColorFormat.YELLOW}重置成功...')
+                if self.server.get_player(target_player_name) is not None:
+                    target_player = self.server.get_player(target_player_name)
+                    target_player.send_message(f'{ColorFormat.YELLOW}经济重置： '
+                                               f'余额： {ColorFormat.WHITE}{self.money_data[target_player_name]}')
+            money_set_form.on_submit = on_submit
+            player.send_form(money_set_form)
+        return on_click
 
     # 更改玩家经济
-    def change_player_money(self, player: Player):
-        player_name_list = [key for key in self.money_data.keys()]
-        dropdown = Dropdown(
-            label=f'{ColorFormat.GREEN}选择玩家...',
-            options=player_name_list
-        )
-        textinput1 = TextInput(
-            label=f'{ColorFormat.GREEN}输入变动金额...',
-            placeholder='请输入任意正整数或负整数，但不能为0， 例如：20或-20'
-        )
-        money_change_form = ModalForm(
-            title=f'{ColorFormat.BOLD}{ColorFormat.LIGHT_PURPLE}经济变动',
-            controls=[dropdown, textinput1],
-            submit_button=f'{ColorFormat.YELLOW}变动',
-            on_close=self.back_to_money_main_form
-        )
-        def on_submit(player: Player, json_str):
-            data = json.loads(json_str)
-            # 获取目标设置的玩家名
-            target_player_name = player_name_list[data[0]]
-            try:
-                money_to_change = int(data[1])
-            except:
-                player.send_message(f'{ColorFormat.RED}变动失败： {ColorFormat.WHITE}表单数据解析错误，请按提示正确填写...')
-                return
-            if money_to_change == 0:
-                player.send_message(f'{ColorFormat.RED}变动失败： {ColorFormat.WHITE}表单数据解析错误，请按提示正确填写...')
-                return
-            self.money_data[target_player_name] += money_to_change
-            self.save_money_data()
-            player.send_message(f'{ColorFormat.YELLOW}变动成功...')
-            if self.server.get_player(target_player_name) is not None:
-                target_player = self.server.get_player(target_player_name)
-                if money_to_change < 0:
-                    target_player.send_message(f'{ColorFormat.YELLOW}经济变动： {ColorFormat.RED}-{abs(money_to_change)}, '
-                                               f'{ColorFormat.YELLOW}余额： {ColorFormat.WHITE}{self.money_data[target_player_name]}')
-                else:
-                    target_player.send_message(f'{ColorFormat.YELLOW}经济变动： {ColorFormat.GREEN}+{money_to_change}, '
-                                               f'{ColorFormat.YELLOW}余额： {ColorFormat.WHITE}{self.money_data[target_player_name]}')
-        money_change_form.on_submit = on_submit
-        player.send_form(money_change_form)
-
-    # 重载玩家经济
-    def reload_money_data(self, player: Player):
-        with open(money_data_file_path, 'r', encoding='utf-8') as f:
-            self.money_data = json.loads(f.read())
-        player.send_message(f'{ColorFormat.YELLOW}重载玩家经济成功...')
+    def change_player_money(self, target_player_name: str, target_player_money: int):
+        def on_click(player: Player):
+            textinput = TextInput(
+                label=f'{ColorFormat.GREEN}{target_player_name}的余额： '
+                      f'{ColorFormat.RESET}{target_player_money}\n\n'
+                      f'{ColorFormat.GREEN}输入变动金额...',
+                placeholder='请输入任意正整数或负整数，但不能为0， 例如：20或-20'
+            )
+            money_change_form = ModalForm(
+                title=f'{ColorFormat.BOLD}{ColorFormat.LIGHT_PURPLE}经济变动',
+                controls=[textinput],
+                submit_button=f'{ColorFormat.YELLOW}变动',
+                on_close=self.money_admin
+            )
+            def on_submit(player: Player, json_str):
+                data = json.loads(json_str)
+                try:
+                    money_to_change = int(data[0])
+                except:
+                    player.send_message(f'{ColorFormat.RED}变动失败： {ColorFormat.WHITE}表单数据解析错误，请按提示正确填写...')
+                    return
+                if money_to_change == 0:
+                    player.send_message(f'{ColorFormat.RED}变动失败： {ColorFormat.WHITE}表单数据解析错误，请按提示正确填写...')
+                    return
+                self.money_data[target_player_name] += money_to_change
+                self.save_money_data()
+                player.send_message(f'{ColorFormat.YELLOW}变动成功...')
+                if self.server.get_player(target_player_name) is not None:
+                    target_player = self.server.get_player(target_player_name)
+                    if money_to_change < 0:
+                        target_player.send_message(f'{ColorFormat.YELLOW}经济变动： {ColorFormat.RED}-{abs(money_to_change)}, '
+                                                   f'{ColorFormat.YELLOW}余额： {ColorFormat.WHITE}{self.money_data[target_player_name]}')
+                    else:
+                        target_player.send_message(f'{ColorFormat.YELLOW}经济变动： {ColorFormat.GREEN}+{money_to_change}, '
+                                                   f'{ColorFormat.YELLOW}余额： {ColorFormat.WHITE}{self.money_data[target_player_name]}')
+            money_change_form.on_submit = on_submit
+            player.send_form(money_change_form)
+        return on_click
 
     # 重载配置文件
     def reload_config_data(self, player: Player):
@@ -417,6 +391,7 @@ class umoney(Plugin):
     # 获取所有玩家经济
     def api_get_money_data(self):
         return self.money_data
+
     # 获取指定玩家经济
     def api_get_player_money(self, player_name: str):
         player_money = self.money_data[player_name]
