@@ -28,6 +28,9 @@ Plugins/
 ├─ umoney/
 │  ├─ config.json
 │  ├─ money.json
+│  ├─ lang/
+│  │  ├─ zh_CN.json
+│  │  ├─ en_US.json
 ```
 
 ### Configuration
