@@ -6,11 +6,13 @@
 
 [![Minecraft - Version](https://img.shields.io/badge/minecraft-v1.21.60_(Bedrock)-black)](https://feedback.minecraft.net/hc/en-us/sections/360001186971-Release-Changelogs)
 [![PyPI - Version](https://img.shields.io/pypi/v/endstone)](https://pypi.org/project/endstone)
+![Total Git clones](https://img.shields.io/badge/dynamic/json?label=Total%20Git%20clones&query=$&url=https://cdn.jsdelivr.net/gh/umarurize/UMoney@master/clone_count.txt&color=brightgreen)
 
 ### Introductions
 * **Rich features:** `money pay`, `money rank`, `money query (operator)`, `money change (operator)`, `money reset (operator)`
 * **Full GUI:** Beautiful GUI forms for easy operation rather than commands.
 * **Hot reload support:** Operators can edit/update `config.json` in game directly.
+* **Localized languages support**
 
 ### Installation
 [Optional pre-plugin] ZX_UI
@@ -51,6 +53,14 @@ UMoney allows operators to edit/update `config.json` through GUI forms with ease
     "BarrelGold90850": 6020
 }
 ```
+
+### Languages
+- [x] `zh_CN`
+- [x] `en_US`
+
+Off course you can add your mother language to UMoney, just creat `XX_XX.json` (such as `ja_JP.json`) and translate value with reference to `en_US.json`.
+
+You can also creat a PR to this repo to make your mother language one of the official languages of UMoney.
 
 ### API
 ```python
