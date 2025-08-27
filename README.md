@@ -1,4 +1,4 @@
-![header](https://capsule-render.vercel.app/api?type=venom&height=150&color=gradient&text=UMoney&fontColor=0:8871e5,100:b678c4&fontSize=50&desc=A%20simple%20economy%20plug-in%20with%20%rich%20features.&descAlignY=80&descSize=20&animation=fadeIn)
+## UMoney
 
 ****
 
