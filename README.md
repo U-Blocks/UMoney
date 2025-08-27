@@ -1,7 +1,5 @@
 ## UMoney
 
-****
-
 <code><a href="https://github.com/umarurize/UMoney"><img height="25" src="https://github.com/umarurize/UMoney/blob/master/logo/logo.jpg" alt="UMoney" /></a>&nbsp;UMoney</code>
 
 ![Total Git clones](https://img.shields.io/badge/dynamic/json?label=Total%20Git%20clones&query=$&url=https://cdn.jsdelivr.net/gh/umarurize/UMoney@master/clone_count.txt&color=brightgreen)
