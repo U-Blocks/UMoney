@@ -7,11 +7,9 @@
 
 ### 🔔Introductions
 * **Rich features:**
-- [x] Money pay
-- [x] Money rank
-- [x] Money query (operator)
-- [x] Money change (operator)
-- [x] Money reset (operator)
+- [x] Money pay (online/offline)
+- [x] Money rank list
+- [x] Money management (operator) (change/reset)
 * **Full GUI:** Beautiful GUI forms for easy operation rather than commands.
 * **Hot reload support:** Operators can edit/update `config.json` in game directly.
 * **Localized languages support**
@@ -43,13 +41,13 @@ UMoney allows operators to edit/update `config.json` through GUI forms with ease
 `config.json`
 ```json5
 {
-    "default_money": 5000,  // initial money for a new player
-    "money_rank_display_num": 15 // the player amount that the money rank can display
+    "default_money": 5000,  // default money for a new player
+    "rank_list_display_num": 15 // the player amount that the money rank can display
 }
 ```
 
 `money.json`
-```json
+```json5
 {
     "umaru rize": 113733,
     "minokni": 1200,
@@ -63,7 +61,7 @@ UMoney allows operators to edit/update `config.json` through GUI forms with ease
 - [x] `zh_CN`
 - [x] `en_US`
 
-Off course you can add your mother language to UMoney, just creat `XX_XX.json` (such as `ja_JP.json`) and translate value with reference to `en_US.json`.
+Of course, you can add your mother language to UMoney, just creat `XX_XX.json` (such as `ja_JP.json`) and translate value with reference to `en_US.json`.
 
 You can also creat a PR to this repo to make your mother language one of the official languages of UMoney.
 
@@ -77,14 +75,14 @@ self.server.plugin_manager.get_plugin('umoney').api_get_player_money(player_name
 
 # get the richest player's money
 # return [player_name: str, player_money: int]
-self.server.plugin_manager.get_plugin('umoney').api_get_player_money_top() -> list
+self.server.plugin_manager.get_plugin('umoney').api_get_richest_player_money_data() -> list
 
 # get the poorest player's money
 # return [player_name: str, player_money: int]
-self.server.plugin_manager.get_plugin('umoney').api_get_player_money_bottom() -> list
+self.server.plugin_manager.get_plugin('umoney').api_get_poorest_player_money_data() -> list
 
 # reset the target player's money
-self.server.plugin_manager.get_plugin('umoney').api_set_player_money(player_name: str, money_to_set: int) -> None
+self.server.plugin_manager.get_plugin('umoney').api_reset_player_money(player_name: str, money_to_set: int) -> None
 
 # change the target player's money
 # money_to change cannot be zero
