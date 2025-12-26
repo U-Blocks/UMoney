@@ -1,6 +1,6 @@
 ## UMoney
 
-<code><a href="https://github.com/umarurize/UMoney"><img height="25" src="https://github.com/umarurize/UMoney/blob/master/logo/logo.jpg" alt="UMoney" /></a>&nbsp;UMoney</code>
+<code><a href="https://github.com/umarurize/UMoney"><img height="25" src="./logo/logo.jpg" alt="UMoney" /></a>&nbsp;UMoney</code>
 
 ![Total Git clones](https://img.shields.io/badge/dynamic/json?label=Total%20Git%20clones&query=$&url=https://cdn.jsdelivr.net/gh/umarurize/UMoney@master/clone_count.txt&color=brightgreen)
 ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/umarurize/UMoney/total)
@@ -20,7 +20,7 @@
 Put `.whl` file into the endstone plugins folder, and then start the server. Enter the command `/um` to call out the main form.
 
 ### 💻Download
-Now, you can get the release version form this repo or <code><a href="https://www.minebbs.com/resources/umoney-jian-dan-shi-yong-qu-zhi-ling-hua-de-jing-ji-xi-tong.10622/"><img height="20" src="https://github.com/umarurize/umaru-cdn/blob/main/images/minebbs.png" alt="Minebbs" /></a>&nbsp;Minebbs</code>.
+Now, you can get the release version form this repo or <code><a href="https://www.minebbs.com/resources/umoney-jian-dan-shi-yong-qu-zhi-ling-hua-de-jing-ji-xi-tong.10622/"><img height="20" src="./logo/minebbs.png" alt="Minebbs" /></a>&nbsp;Minebbs</code>.
 
 ### 📁File structure
 ```
