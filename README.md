@@ -61,31 +61,31 @@ UMoney allows operators to edit/update `config.json` through GUI forms with ease
 - [x] `zh_CN`
 - [x] `en_US`
 
-Of course, you can add your mother language to UMoney, just creat `XX_XX.json` (such as `ja_JP.json`) and translate value with reference to `en_US.json`.
+Of course, you can add your mother language to UMoney, just create `XX_XX.json` (such as `ja_JP.json`) and translate value with reference to `en_US.json`.
 
-You can also creat a PR to this repo to make your mother language one of the official languages of UMoney.
+You can also create a PR to this repo to make your mother language one of the official languages of UMoney.
 
 ### 💪API
 ```python
-# get all players' money data
+# Get all players' money data
 self.server.plugin_manager.get_plugin('umoney').api_get_money_data() -> dict
 
-# get the target player's money
+# Get the target player's money
 self.server.plugin_manager.get_plugin('umoney').api_get_player_money(player_name: str) -> int
 
-# get the richest player's money
+# Get the richest player's money
 # return [player_name: str, player_money: int]
 self.server.plugin_manager.get_plugin('umoney').api_get_richest_player_money_data() -> list
 
-# get the poorest player's money
+# Get the poorest player's money
 # return [player_name: str, player_money: int]
 self.server.plugin_manager.get_plugin('umoney').api_get_poorest_player_money_data() -> list
 
-# reset the target player's money
+# Reset the target player's money
 self.server.plugin_manager.get_plugin('umoney').api_reset_player_money(player_name: str, money_to_set: int) -> None
 
-# change the target player's money
-# money_to change cannot be zero
+# Change the target player's money
+# money to change cannot be zero
 self.server.plugin_manager.get_plugin('umoney').api_change_player_money(player_name: str, money_to_change: int) -> None
 ```
 
