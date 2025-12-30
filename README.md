@@ -1,30 +1,43 @@
-## UMoney
-
 <code><a href="https://github.com/umarurize/UMoney"><img height="25" src="./logo/logo.jpg" alt="UMoney" /></a>&nbsp;UMoney</code>
 
 ![Total Git clones](https://img.shields.io/badge/dynamic/json?label=Total%20Git%20clones&query=$&url=https://cdn.jsdelivr.net/gh/umarurize/UMoney@master/clone_count.txt&color=brightgreen)
 ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/umarurize/UMoney/total)
+![](https://img.shields.io/badge/language-python-blue.svg) 
+[![GitHub License](https://img.shields.io/github/license/umarurize/UTP)](LICENSE)
 
-### 🔔Introductions
+***
+
+### ✨ Introductions
 * **Rich features:**
 - [x] Money pay (online/offline)
 - [x] Money rank list
 - [x] Money management (operator) (change/reset)
-* **Full GUI:** Beautiful GUI forms for easy operation rather than commands.
-* **Hot reload support:** Operators can edit/update `config.json` in game directly.
-* **Localized languages support**
+* **Free of tedious file editing**
+* **Support with full GUI forms**
+* **Support with hot reloading**
+* **Support with localized multi-language**
 
-### 🔨Installation
-[Optional pre-plugin] ZX_UI
+### 📦 Installation
+**Tips**: *UMoney is adapted to all versions of Endstone*
 
-Put `.whl` file into the endstone plugins folder, and then start the server. Enter the command `/um` to call out the main form.
+<details>
+<summary>Check pre-plugins</summary>
 
-### 💻Download
-Now, you can get the release version form this repo or <code><a href="https://www.minebbs.com/resources/umoney-jian-dan-shi-yong-qu-zhi-ling-hua-de-jing-ji-xi-tong.10622/"><img height="20" src="./logo/minebbs.png" alt="Minebbs" /></a>&nbsp;Minebbs</code>.
+* **Optional pre-plugin**
+  * [ZX_UI](https://www.minebbs.com/resources/zx-ui.9830/)
 
-### 📁File structure
+</details>
+
+1. Ensure you have downloaded the correct version and installed all required pre-plugins
+2. Place the `.whl` file into your server's `plugins` folder
+3. Restart your server
+4. Enter the command `/um` to call out the main form of UMoney
+
+***
+
+### 📄 File structure
 ```
-Plugins/
+plugins/
 ├─ umoney/
 │  ├─ config.json
 │  ├─ money.json
@@ -33,16 +46,14 @@ Plugins/
 │  │  ├─ en_US.json
 ```
 
-### 📝Configuration
-UMoney allows operators to edit/update `config.json` through GUI forms with ease, here are just simple explanations for relevant configurations.
+***
 
-`money.json` just stores simple key-value pairs (key stands for player's name, value stands for player's money)
-
+### ⚙️ Configuration
 `config.json`
 ```json5
 {
-    "default_money": 5000,  // default money for a new player
-    "rank_list_display_num": 15 // the player amount that the money rank can display
+    "default_money": 5000,  // The default money for a new player
+    "rank_list_display_num": 15 // The max num of players the money rank list can display
 }
 ```
 
@@ -57,15 +68,22 @@ UMoney allows operators to edit/update `config.json` through GUI forms with ease
 }
 ```
 
-### 🌐Languages
+***
+
+### 🌎 Localized multi-language
+* Currently supported localized languages for UMoney:
 - [x] `zh_CN`
 - [x] `en_US`
+* How to add more languages to UMoney? Here we use Japanese for an example.
+  * Create a file named `ja_JP.json` and place it into `lang` folder
+  * Copy all key-value pairs from `en_US.json` and paste them into `ja_JP.json`
+  * Refer to the English values and translate them all into Japanese, then save the file.
+  * Restart your server, and you're all done!
+* If you'd like your translated language to be included as one of the official languages of this plugin, feel free to shoot over a PR.
 
-Of course, you can add your mother language to UMoney, just create `XX_XX.json` (such as `ja_JP.json`) and translate value with reference to `en_US.json`.
+***
 
-You can also create a PR to this repo to make your mother language one of the official languages of UMoney.
-
-### 💪API
+### 💪 API
 ```python
 # Get all players' money data
 self.server.plugin_manager.get_plugin('umoney').api_get_money_data() -> dict
@@ -89,8 +107,10 @@ self.server.plugin_manager.get_plugin('umoney').api_reset_player_money(player_na
 self.server.plugin_manager.get_plugin('umoney').api_change_player_money(player_name: str, money_to_change: int) -> None
 ```
 
+***
+
 ### 📷Screenshots
 You can view related screenshots of UMoney from images folder of this repo.
 
 
-![](https://img.shields.io/badge/language-python-blue.svg) [![GitHub License](https://img.shields.io/github/license/umarurize/UTP)](LICENSE)
+
