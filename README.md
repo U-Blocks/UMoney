@@ -58,6 +58,17 @@ plugins/
 }
 ```
 
+#### Upgrade compatibility
+When upgrading from an older UMoney release, existing official language files
+(`zh_CN.json` and `en_US.json`) are automatically completed with any missing
+default keys. Existing translations, old extra keys, and custom language files
+are preserved.
+
+The canonical rank-list configuration key is `rank_list_display_num`. Older
+configs that only contain `money_rank_display_num` are migrated by copying that
+value to `rank_list_display_num`; the old key and any unknown config fields are
+left untouched. UMoney's external API methods remain unchanged.
+
 `money.json`
 ```json5
 {
@@ -142,5 +153,4 @@ self.server.plugin_manager.get_plugin('umoney').api_change_player_money(player_n
 
 ### 📷Screenshots
 You can view related screenshots of UMoney from images folder of this repo.
-
 

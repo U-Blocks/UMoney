@@ -16,8 +16,7 @@ current_dir = os.getcwd()
 
 first_dir = os.path.join(current_dir, "plugins", "umoney")
 
-if not os.path.exists(first_dir):
-    os.mkdir(first_dir)
+os.makedirs(first_dir, exist_ok=True)
 
 money_data_file_path = os.path.join(first_dir, "money.json")
 
@@ -27,8 +26,32 @@ transaction_data_file_path = os.path.join(first_dir, "transactions.json")
 
 lang_dir = os.path.join(first_dir, "lang")
 
-if not os.path.exists(lang_dir):
-    os.mkdir(lang_dir)
+os.makedirs(lang_dir, exist_ok=True)
+
+
+DEFAULT_CONFIG_DATA = {
+    "default_money": 5000,
+    "rank_list_display_num": 15
+}
+
+
+def normalize_config_data(config_data: dict) -> tuple[dict, bool]:
+    normalized_config_data = dict(config_data)
+    changed = False
+
+    if (
+            "rank_list_display_num" not in normalized_config_data
+            and "money_rank_display_num" in normalized_config_data
+    ):
+        normalized_config_data["rank_list_display_num"] = normalized_config_data["money_rank_display_num"]
+        changed = True
+
+    for key, value in DEFAULT_CONFIG_DATA.items():
+        if key not in normalized_config_data:
+            normalized_config_data[key] = value
+            changed = True
+
+    return normalized_config_data, changed
 
 
 class umoney(Plugin):
@@ -63,21 +86,24 @@ class umoney(Plugin):
 
         # load config data
         if not os.path.exists(config_data_file_path):
-            with open(config_data_file_path, "w") as f:
-                config_data = {
-                    "default_money": 5000,
-                    "rank_list_display_num": 15
-                }
-                json_str = json.dumps(config_data, indent=4, ensure_ascii=False)
-                f.write(json_str)
+            config_data = dict(DEFAULT_CONFIG_DATA)
+            config_changed = True
         else:
             with open(config_data_file_path, "r") as f:
                 config_data = json.loads(f.read())
+
+            config_data, config_changed = normalize_config_data(config_data)
+
+        if config_changed:
+            with open(config_data_file_path, "w") as f:
+                json_str = json.dumps(config_data, indent=4, ensure_ascii=False)
+                f.write(json_str)
 
         self.config_data = config_data
 
         # load lang
         self.lang_data = load_lang_data(lang_dir)
+        self._missing_lang_keys_warned = set()
 
     commands = {
         "um": {
@@ -835,24 +861,28 @@ class umoney(Plugin):
 
     def get_text(self, player: Player, text_key: str) -> str:
         player_lang = player.locale
+        text_value = self.lang_data.get(player_lang, {}).get(text_key)
 
-        try:
-            if self.lang_data.get(player_lang) is None:
-                text_value = self.lang_data["en_US"][text_key]
-            else:
-                if self.lang_data[player_lang].get(text_key) is None:
-                    text_value = self.lang_data["en_US"][text_key]
-                else:
-                    text_value = self.lang_data[player_lang][text_key]
-
+        if text_value is not None:
             return text_value
-        except Exception as e:
-            self.logger.error(
+
+        text_value = self.lang_data.get("en_US", {}).get(text_key)
+
+        if text_value is not None:
+            return text_value
+
+        missing_lang_keys_warned = getattr(self, "_missing_lang_keys_warned", set())
+
+        if text_key not in missing_lang_keys_warned:
+            self.logger.warning(
                 f"{ColorFormat.RED}"
-                f"{e}"
+                f"UMoney: missing language key '{text_key}', falling back to the key name..."
             )
 
-            return text_key
+            missing_lang_keys_warned.add(text_key)
+            self._missing_lang_keys_warned = missing_lang_keys_warned
+
+        return text_key
 
     # API
     def api_get_money_data(self) -> dict:
