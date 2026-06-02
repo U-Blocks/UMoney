@@ -41,6 +41,7 @@ plugins/
 ├─ umoney/
 │  ├─ config.json
 │  ├─ money.json
+│  ├─ transactions.json
 │  ├─ lang/
 │  │  ├─ zh_CN.json
 │  │  ├─ en_US.json
@@ -68,6 +69,30 @@ plugins/
 }
 ```
 
+`transactions.json`
+```json5
+[
+    {
+        "id": "07e51fbf-4d81-43bf-8b7b-3d852d0ac4f2",
+        "created_at": "2026-06-01T10:00:00Z",
+        "type": "pay",
+        "source": "form",
+        "operator": null,
+        "payer": "umaru rize",
+        "payee": "minokni",
+        "amount": 100,
+        "balances_before": {
+            "umaru rize": 113733,
+            "minokni": 1200
+        },
+        "balances_after": {
+            "umaru rize": 113633,
+            "minokni": 1300
+        }
+    }
+]
+```
+
 ***
 
 ### 🌎 Localized multi-language
@@ -87,6 +112,12 @@ plugins/
 ```python
 # Get all players' money data
 self.server.plugin_manager.get_plugin('umoney').api_get_money_data() -> dict
+
+# Get all money transaction records
+self.server.plugin_manager.get_plugin('umoney').api_get_transaction_data() -> list
+
+# Get the target player's money transaction records
+self.server.plugin_manager.get_plugin('umoney').api_get_player_transaction_data(player_name: str) -> list
 
 # Get the target player's money
 self.server.plugin_manager.get_plugin('umoney').api_get_player_money(player_name: str) -> int
@@ -111,6 +142,5 @@ self.server.plugin_manager.get_plugin('umoney').api_change_player_money(player_n
 
 ### 📷Screenshots
 You can view related screenshots of UMoney from images folder of this repo.
-
 
 
