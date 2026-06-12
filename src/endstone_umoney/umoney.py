@@ -360,7 +360,7 @@ class umoney(Plugin):
 
                 target_player.send_message(
                     f"{ColorFormat.YELLOW}"
-                    f"{self.get_text(target_player, 'pay.message.success2')}"
+                    f"{self.get_text(target_player, 'pay.message.success2').format(player.name, money_to_pay)}"
                 )
 
                 target_player.send_message(
@@ -369,7 +369,7 @@ class umoney(Plugin):
                     f"{ColorFormat.GREEN}"
                     f"{money_to_pay}\n"
                     f"{ColorFormat.YELLOW}"
-                    f"{self.get_text(player, 'money')}: "
+                    f"{self.get_text(target_player, 'money')}: "
                     f"{ColorFormat.WHITE}"
                     f"{self.money_data[target_player_name]}"
                 )
