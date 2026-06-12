@@ -1,5 +1,7 @@
 import os
 import json
+from datetime import datetime, timezone
+from uuid import uuid4
 
 from endstone.plugin import Plugin
 from endstone import ColorFormat, Player
@@ -14,17 +16,42 @@ current_dir = os.getcwd()
 
 first_dir = os.path.join(current_dir, "plugins", "umoney")
 
-if not os.path.exists(first_dir):
-    os.mkdir(first_dir)
+os.makedirs(first_dir, exist_ok=True)
 
 money_data_file_path = os.path.join(first_dir, "money.json")
 
 config_data_file_path = os.path.join(first_dir, "config.json")
 
+transaction_data_file_path = os.path.join(first_dir, "transactions.json")
+
 lang_dir = os.path.join(first_dir, "lang")
 
-if not os.path.exists(lang_dir):
-    os.mkdir(lang_dir)
+os.makedirs(lang_dir, exist_ok=True)
+
+
+DEFAULT_CONFIG_DATA = {
+    "default_money": 5000,
+    "rank_list_display_num": 15
+}
+
+
+def normalize_config_data(config_data: dict) -> tuple[dict, bool]:
+    normalized_config_data = dict(config_data)
+    changed = False
+
+    if (
+            "rank_list_display_num" not in normalized_config_data
+            and "money_rank_display_num" in normalized_config_data
+    ):
+        normalized_config_data["rank_list_display_num"] = normalized_config_data["money_rank_display_num"]
+        changed = True
+
+    for key, value in DEFAULT_CONFIG_DATA.items():
+        if key not in normalized_config_data:
+            normalized_config_data[key] = value
+            changed = True
+
+    return normalized_config_data, changed
 
 
 class umoney(Plugin):
@@ -45,23 +72,38 @@ class umoney(Plugin):
 
         self.money_data = money_data
 
+        # load transaction data
+        if not os.path.exists(transaction_data_file_path):
+            with open(transaction_data_file_path, "w") as f:
+                transaction_data = []
+                json_str = json.dumps(transaction_data, indent=4, ensure_ascii=False)
+                f.write(json_str)
+        else:
+            with open(transaction_data_file_path, "r") as f:
+                transaction_data = json.loads(f.read())
+
+        self.transaction_data = transaction_data
+
         # load config data
         if not os.path.exists(config_data_file_path):
-            with open(config_data_file_path, "w") as f:
-                config_data = {
-                    "default_money": 5000,
-                    "rank_list_display_num": 15
-                }
-                json_str = json.dumps(config_data, indent=4, ensure_ascii=False)
-                f.write(json_str)
+            config_data = dict(DEFAULT_CONFIG_DATA)
+            config_changed = True
         else:
             with open(config_data_file_path, "r") as f:
                 config_data = json.loads(f.read())
+
+            config_data, config_changed = normalize_config_data(config_data)
+
+        if config_changed:
+            with open(config_data_file_path, "w") as f:
+                json_str = json.dumps(config_data, indent=4, ensure_ascii=False)
+                f.write(json_str)
 
         self.config_data = config_data
 
         # load lang
         self.lang_data = load_lang_data(lang_dir)
+        self._missing_lang_keys_warned = set()
 
     commands = {
         "um": {
@@ -272,11 +314,30 @@ class umoney(Plugin):
 
     def pay_check_confirm(self, target_player_name: str, money_to_pay: int):
         def on_click(player: Player):
-            self.money_data[player.name] -= money_to_pay
+            payer_balance_before = self.money_data[player.name]
+            payee_balance_before = self.money_data[target_player_name]
 
-            self.money_data[target_player_name] += money_to_pay
+            self.money_data[player.name] = payer_balance_before - money_to_pay
+
+            self.money_data[target_player_name] = payee_balance_before + money_to_pay
 
             self.save_money_data()
+
+            self.record_transaction(
+                "pay",
+                "form",
+                payer=player.name,
+                payee=target_player_name,
+                amount=money_to_pay,
+                balances_before={
+                    player.name: payer_balance_before,
+                    target_player_name: payee_balance_before
+                },
+                balances_after={
+                    player.name: self.money_data[player.name],
+                    target_player_name: self.money_data[target_player_name]
+                }
+            )
 
             player.send_message(
                 f"{ColorFormat.YELLOW}"
@@ -502,9 +563,21 @@ class umoney(Plugin):
 
     def reset_check(self, player_name: str, reset_money: int):
         def on_click(player: Player):
+            balance_before = self.money_data[player_name]
+
             self.money_data[player_name] = reset_money
 
             self.save_money_data()
+
+            self.record_transaction(
+                "reset",
+                "form",
+                operator=player.name,
+                player=player_name,
+                amount=reset_money - balance_before,
+                balance_before=balance_before,
+                balance_after=self.money_data[player_name]
+            )
 
             player.send_message(
                 f"{ColorFormat.YELLOW}"
@@ -606,9 +679,21 @@ class umoney(Plugin):
 
     def change_check(self, player_name: str, change_money: int):
         def on_click(player: Player):
-            self.money_data[player_name] += change_money
+            balance_before = self.money_data[player_name]
+
+            self.money_data[player_name] = balance_before + change_money
 
             self.save_money_data()
+
+            self.record_transaction(
+                "change",
+                "form",
+                operator=player.name,
+                player=player_name,
+                amount=change_money,
+                balance_before=balance_before,
+                balance_after=self.money_data[player_name]
+            )
 
             player.send_message(
                 f"{ColorFormat.YELLOW}"
@@ -719,6 +804,15 @@ class umoney(Plugin):
 
             self.save_money_data()
 
+            self.record_transaction(
+                "initial",
+                "join",
+                player=e.player.name,
+                amount=self.config_data["default_money"],
+                balance_before=None,
+                balance_after=self.money_data[e.player.name]
+            )
+
         e.player.send_message(
             f"{ColorFormat.YELLOW}"
             f"{self.get_text(e.player, 'money')}: "
@@ -736,6 +830,29 @@ class umoney(Plugin):
             json_str = json.dumps(self.config_data, indent=4, ensure_ascii=False)
             f.write(json_str)
 
+    def save_transaction_data(self):
+        with open(transaction_data_file_path, "w+") as f:
+            json_str = json.dumps(self.transaction_data, indent=4, ensure_ascii=False)
+            f.write(json_str)
+
+    def get_transaction_created_at(self) -> str:
+        return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+    def record_transaction(self, transaction_type: str, source: str, operator=None, **transaction_details) -> None:
+        transaction = {
+            "id": str(uuid4()),
+            "created_at": self.get_transaction_created_at(),
+            "type": transaction_type,
+            "source": source,
+            "operator": operator
+        }
+
+        transaction.update(transaction_details)
+
+        self.transaction_data.append(transaction)
+
+        self.save_transaction_data()
+
     def back_to_zx_ui(self, player: Player):
         player.perform_command("cd")
 
@@ -744,28 +861,48 @@ class umoney(Plugin):
 
     def get_text(self, player: Player, text_key: str) -> str:
         player_lang = player.locale
+        text_value = self.lang_data.get(player_lang, {}).get(text_key)
 
-        try:
-            if self.lang_data.get(player_lang) is None:
-                text_value = self.lang_data["en_US"][text_key]
-            else:
-                if self.lang_data[player_lang].get(text_key) is None:
-                    text_value = self.lang_data["en_US"][text_key]
-                else:
-                    text_value = self.lang_data[player_lang][text_key]
-
+        if text_value is not None:
             return text_value
-        except Exception as e:
-            self.logger.error(
+
+        text_value = self.lang_data.get("en_US", {}).get(text_key)
+
+        if text_value is not None:
+            return text_value
+
+        missing_lang_keys_warned = getattr(self, "_missing_lang_keys_warned", set())
+
+        if text_key not in missing_lang_keys_warned:
+            self.logger.warning(
                 f"{ColorFormat.RED}"
-                f"{e}"
+                f"UMoney: missing language key '{text_key}', falling back to the key name..."
             )
 
-            return text_key
+            missing_lang_keys_warned.add(text_key)
+            self._missing_lang_keys_warned = missing_lang_keys_warned
+
+        return text_key
 
     # API
     def api_get_money_data(self) -> dict:
         return self.money_data
+
+    def api_get_transaction_data(self) -> list:
+        return self.transaction_data
+
+    def api_get_player_transaction_data(self, player_name: str) -> list:
+        player_transaction_data = []
+
+        for transaction in self.transaction_data:
+            if (
+                    transaction.get("player") == player_name
+                    or transaction.get("payer") == player_name
+                    or transaction.get("payee") == player_name
+            ):
+                player_transaction_data.append(transaction)
+
+        return player_transaction_data
 
     def api_get_player_money(self, player_name: str):
         if self.money_data.get(player_name) is None:
@@ -799,6 +936,8 @@ class umoney(Plugin):
                 f"UMoney: player data not found..."
             )
 
+            return
+
         if change_money == 0:
             self.logger.error(
                 f"{ColorFormat.RED}"
@@ -807,9 +946,20 @@ class umoney(Plugin):
 
             return
 
-        self.money_data[player_name] += change_money
+        balance_before = self.money_data[player_name]
+
+        self.money_data[player_name] = balance_before + change_money
 
         self.save_money_data()
+
+        self.record_transaction(
+            "change",
+            "api",
+            player=player_name,
+            amount=change_money,
+            balance_before=balance_before,
+            balance_after=self.money_data[player_name]
+        )
 
         if self.server.get_player(player_name) is not None:
             player = self.server.get_player(player_name)
@@ -848,9 +998,20 @@ class umoney(Plugin):
 
             return
 
+        balance_before = self.money_data[player_name]
+
         self.money_data[player_name] = reset_money
 
         self.save_money_data()
+
+        self.record_transaction(
+            "reset",
+            "api",
+            player=player_name,
+            amount=reset_money - balance_before,
+            balance_before=balance_before,
+            balance_after=self.money_data[player_name]
+        )
 
         if self.server.get_player(player_name) is not None:
             player = self.server.get_player(player_name)
